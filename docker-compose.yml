@@ -4,24 +4,29 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: movie-api
+      dockerfile: Dockerfile.dev
+    container_name: movie-api-dev
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
+      - NODE_ENV=development
       - PORT=${PORT:-3000}
       - DB_HOST=${DB_HOST:-mysql}
       - DB_PORT=${DB_PORT:-3306}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - /app/node_modules
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - movie-network
-    restart: unless-stopped
+    command: npm run dev
 
   mysql:
     image: mysql:8.0
@@ -43,7 +48,6 @@ services:
       retries: 5
     networks:
       - movie-network
-    restart: unless-stopped
 
 networks:
   movie-network:

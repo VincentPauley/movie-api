@@ -43,7 +43,7 @@ export const getMovieById = async (req: Request, res: Response) => {
 
     // TODO: more than one match should be identified as a problem
 
-    res.json({ movie: rows[0] })
+    res.json({ movie_found: rows[0] })
   } catch (e) {
     console.error(e)
     res.status(500).json({ message: 'Error: getMovieById failed...' })

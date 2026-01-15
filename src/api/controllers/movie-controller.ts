@@ -22,10 +22,30 @@ export const getAllMovies = async (req: Request, res: Response) => {
   }
 }
 
-export const getMovieById = (req: Request, res: Response) => {
-  res.json({
-    movies: [
-      { id: 4, title: 'Benny & Joon', director: 'Not Sure' },
-    ],
-  });
+export const getMovieById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+
+    const [rows] = await pool.query(`
+      SELECT *
+      FROM
+        movies
+      WHERE id = ?`, [id]
+    );
+
+    if (!Array.isArray(rows)) {
+      throw new Error('improper query response')
+    }
+
+    if (rows.length < 1) {
+      return res.status(404).json({ message: 'no movie with that id' })
+    }
+
+    // TODO: more than one match should be identified as a problem
+
+    res.json({ movie: rows[0] })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ message: 'Error: getMovieById failed...' })
+  }
 }

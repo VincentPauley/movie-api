@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import mysql from 'mysql2/promise';
+import mysql, { RowDataPacket } from 'mysql2/promise';
 
 // TODO: this can be made available globally
 const pool = mysql.createPool({
@@ -13,12 +13,35 @@ const pool = mysql.createPool({
   queueLimit: 0
 })
 
+interface Movie extends RowDataPacket {
+  id: string;
+  title: string;
+  year: number;
+  rated: string;
+}
+
+interface MovieWithGenre extends RowDataPacket {
+  id: string;
+  title: string;
+  year: number;
+  rated: string;
+  genre_id: string;
+  genre_name: string;
+  genre_level: number;
+}
+
 export const getAllMovies = async (req: Request, res: Response) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM movies');
-    res.json({ movies: rows });
+    const [rows] = await pool.query<Movie[]>('SELECT * FROM movies');
+    res
+      .status(200)
+      .json({ movies: rows });
   } catch (e) {
-    res.json({ message: e })
+    const error = e as Error;
+    console.error(error.message)
+    res
+      .status(500)
+      .json({ message: 'Failed to fetch movies' })
   }
 }
 
@@ -26,7 +49,7 @@ export const getMovieById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 
-    const [rows] = await pool.query(`
+    const [rows] = await pool.query<MovieWithGenre[]>(`
       SELECT
         *
       FROM
@@ -45,7 +68,21 @@ export const getMovieById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'no movie with that id' })
     }
 
-    const movieFullRecord: any = {
+    interface GenreRecord {
+      genre_id: string;
+      genre_name: string;
+      genre_level: number;
+    }
+
+    interface movieFullRecord {
+      id: string;
+      title: string;
+      year: number;
+      rated: string;
+      genres: GenreRecord[]
+    }
+
+    const movieFullRecord: movieFullRecord = {
       id: 'N/A',
       title: 'N/A',
       year: 0,
@@ -53,7 +90,7 @@ export const getMovieById = async (req: Request, res: Response) => {
       genres: []
     }
 
-    rows.forEach((row: any, index) => {
+    rows.forEach((row, index) => {
       if (index === 0) {
         movieFullRecord.id = row.id;
         movieFullRecord.title = row.title;

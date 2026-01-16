@@ -1,6 +1,6 @@
 import express from "express";
 
-import { getAllGenres, addGenre } from "../controllers/genre-controller";
+import { getAllGenres, addGenre, deleteGenre } from "../controllers/genre-controller";
 
 const router = express.Router();
 
@@ -61,6 +61,34 @@ router.get('/', getAllGenres);
  *       400:
  *         description: Invalid request body
  */
-router.post('/', addGenre)
+router.post('/', addGenre);
+/**
+ * @openapi
+ * /api/v1/genres/{id}:
+ *   delete:
+ *     tags:
+ *       - Genres
+ *     summary: returns all known genres in the DB
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The movie ID
+ *         default: 1071097f-a288-43e8-9539-c6f40ee11c6f
+ *     responses:
+ *       200:
+ *         description: genre has been deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 genres:
+ *       404:
+ *         description: no genre with provided ID was found 
+ */
+router.delete('/:id', deleteGenre)
 
 export default router;

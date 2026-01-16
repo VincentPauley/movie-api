@@ -50,10 +50,6 @@ export const getMovieById = async (req: Request, res: Response) => {
       [id]
     );
 
-    if (!Array.isArray(rows)) {
-      throw new Error('improper query response')
-    }
-
     if (rows.length < 1) {
       return res.status(404).json({ message: 'no movie with that id' })
     }

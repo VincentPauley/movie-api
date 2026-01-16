@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { z } from 'zod'
-import db from '../../db'
-import logger from '../../config/logger'
-import { RowDataPacket } from 'mysql2';
+import db from '@/db'
+import logger from '@/config/logger'
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
 const addGenreSchema = z.object({
     genre_name: z.string().min(1, 'genre_name is a required param'),
@@ -13,6 +13,11 @@ interface Genre extends RowDataPacket {
     id: string;
     genre_name: string;
     genre_level: number;
+}
+
+interface GenreJunction extends RowDataPacket {
+    movie_id: string;
+    genre_id: string;
 }
 
 export const getAllGenres = async (req: Request, res: Response) => {
@@ -68,7 +73,19 @@ export const deleteGenre = async (req: Request, res: Response) => {
             return res.status(404).json({ message: `no genre by id: '${id}' exists.` })
         }
 
-        res.send('deleteo request was received for id: ' + id)
+        const [movies_with_genre] = await db.query<GenreJunction[]>('SELECT * FROM movie_genres WHERE genre_id = ?', [id])
+
+        if (movies_with_genre.length > 0) {
+            return res.status(400).json({message: `cannot currently delete genres that are in use, ${movies_with_genre.length} movies linked.`})
+        }
+
+        const [result] = await db.query<ResultSetHeader>('DELETE FROM genres WHERE id = ?', [id]);
+
+        if (result.affectedRows !== 1) {
+            throw new Error('expected amount of rows were not affected by delete')
+        }
+
+        res.status(204).json({ message: `successfully deleted genre: '${id}'` })
     } catch (e) {
         const error = e as Error;
         logger.error('Failed to delete genre', { error: error.message, stack: error.stack });

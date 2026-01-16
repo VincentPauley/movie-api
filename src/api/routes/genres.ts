@@ -78,7 +78,7 @@ router.post('/', addGenre);
  *         description: The movie ID
  *         default: 1071097f-a288-43e8-9539-c6f40ee11c6f
  *     responses:
- *       200:
+ *       204:
  *         description: genre has been deleted
  *         content:
  *           application/json:
@@ -87,7 +87,9 @@ router.post('/', addGenre);
  *               properties:
  *                 genres:
  *       404:
- *         description: no genre with provided ID was found 
+ *         description: no genre with provided ID was found
+ *       500:
+ *         description: something went wrong
  */
 router.delete('/:id', deleteGenre)
 

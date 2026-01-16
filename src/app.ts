@@ -2,8 +2,11 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
+import swaggerUi from 'swagger-ui-express'
 
 import type MessageResponse from "./interfaces/message-response.js";
+
+import { swaggerSpec } from './swagger'
 
 import api from "./api/index.js";
 import * as middlewares from "./middlewares.js";
@@ -22,6 +25,8 @@ app.get<object, MessageResponse>("/", (req, res) => {
 });
 
 app.use("/api/v1", api);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);

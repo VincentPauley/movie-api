@@ -1,6 +1,6 @@
 import express from "express";
 
-import { getAllGenres } from "../controllers/genre-controller";
+import { getAllGenres, addGenre } from "../controllers/genre-controller";
 
 const router = express.Router();
 
@@ -32,5 +32,35 @@ const router = express.Router();
  *                         type: number
  */
 router.get('/', getAllGenres);
+/**
+ * @openapi
+ * /api/v1/genres:
+ *   post:
+ *     tags:
+ *       - Genres
+ *     summary: add a new genre to the database
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - genre_name
+ *               - genre_level
+ *             properties:
+ *               genre_name:
+ *                 type: string
+ *                 default: test_genre
+ *               genre_level:
+ *                 type: number
+ *                 default: 1
+ *     responses:
+ *       200:
+ *         description: Genre successfully added
+ *       400:
+ *         description: Invalid request body
+ */
+router.post('/', addGenre)
 
 export default router;

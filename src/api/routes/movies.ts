@@ -2,7 +2,7 @@ import express from "express";
 
 const router = express.Router();
 
-import { getAllMovies, getMovieById } from "../controllers/movie-controller";
+import { getAllMovies, getMovieById, searchMovies } from "../controllers/movie-controller";
 
 /**
  * @openapi
@@ -34,7 +34,18 @@ import { getAllMovies, getMovieById } from "../controllers/movie-controller";
  *                         type: string
  */
 router.get("/", getAllMovies)
-
+/**
+ * @openapi
+ * /api/v1/movies/search:
+ *  get:
+ *    tags:
+ *      - Movies
+ *    summary: search movies by different criteria
+ *    responses:
+ *      200:
+ *        description: movies matching search criteria
+ */
+router.get("/search", searchMovies)
 /**
  * @openapi
  * /api/v1/movies/{id}:
@@ -82,5 +93,7 @@ router.get("/", getAllMovies)
  *                                type: number
  */
 router.get("/:id", getMovieById)
+
+
 
 export default router;

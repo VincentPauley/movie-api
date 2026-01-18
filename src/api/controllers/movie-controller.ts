@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
 
-import db from '../../db'
+import db from '@/db'
 
 interface Movie extends RowDataPacket {
   id: string;
@@ -18,6 +18,18 @@ interface MovieWithGenre extends RowDataPacket {
   genre_id: string;
   genre_name: string;
   genre_level: number;
+}
+
+export const searchMovies = async (req: Request, res: Response) => {
+  try {
+    res.status(200).json({ message: 'got a search request.' })
+  } catch (e) {
+    const error = e as Error;
+      console.error(error.message)
+      res
+        .status(500)
+        .json({ message: 'movie search failure' })
+  }
 }
 
 export const getAllMovies = async (req: Request, res: Response) => {

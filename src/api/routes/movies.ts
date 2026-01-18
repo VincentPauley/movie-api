@@ -41,6 +41,12 @@ router.get("/", getAllMovies)
  *    tags:
  *      - Movies
  *    summary: search movies by different criteria
+ *    parameters:
+ *      - in: query
+ *        name: genres
+ *        schema:
+ *          type: string
+ *          description: single genre id or delimited list to search
  *    responses:
  *      200:
  *        description: movies matching search criteria

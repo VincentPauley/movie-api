@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2/promise';
+import { z } from 'zod';
 
 import db from '@/db'
 
@@ -20,9 +21,46 @@ interface MovieWithGenre extends RowDataPacket {
   genre_level: number;
 }
 
+const movieSearchSchema = z.object({
+  genres: z.string().optional().transform(val => val?.split(','))
+})
+
 export const searchMovies = async (req: Request, res: Response) => {
   try {
-    res.status(200).json({ message: 'got a search request.' })
+
+    const params = movieSearchSchema.parse(req.query)
+
+    const clauses: string[] = []
+
+    const query_args: string[] = [];
+
+    if (params.genres?.length) {
+      let genre_base = 'JOIN movie_genres mg ON m.id = mg.movie_id WHERE'
+
+      const genre_match_cases: string[] = []
+
+      params.genres?.forEach(genre => {
+        genre_match_cases.push(`mg.genre_id = ?`)
+        query_args.push(genre)
+      })
+
+      const full_cases = genre_match_cases.join(' OR ')
+
+      clauses.push(`${genre_base} ${full_cases}`) 
+    }
+
+    const queryTemplate = `
+      SELECT
+        *
+      FROM
+        movies m  
+    `
+
+    const full_query = `${queryTemplate} ${clauses.join(' ')}`
+
+    const [rows] = await db.query(full_query, query_args)
+
+    res.status(200).json({ message: 'got a search request.', rows, full_query })
   } catch (e) {
     const error = e as Error;
       console.error(error.message)

@@ -35,8 +35,6 @@ export const searchMovies = async (req: Request, res: Response) => {
     const query_args: string[] = [];
 
     if (params.genres?.length) {
-      let genre_base = 'JOIN movie_genres mg ON m.id = mg.movie_id WHERE'
-
       const genre_match_cases: string[] = []
 
       params.genres?.forEach(genre => {
@@ -46,15 +44,10 @@ export const searchMovies = async (req: Request, res: Response) => {
 
       const full_cases = genre_match_cases.join(' OR ')
 
-      clauses.push(`${genre_base} ${full_cases}`) 
+      clauses.push(full_cases) 
     }
 
-    const queryTemplate = `
-      SELECT
-        *
-      FROM
-        movies m  
-    `
+    const queryTemplate = 'SELECT * FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id WHERE'  
 
     const full_query = `${queryTemplate} ${clauses.join(' ')}`
 

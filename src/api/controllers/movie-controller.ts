@@ -21,9 +21,15 @@ interface MovieWithGenre extends RowDataPacket {
   genre_level: number;
 }
 
+interface MovieSearchId extends RowDataPacket {
+  id: string;
+}
+
 const movieSearchSchema = z.object({
   genres: z.string().optional().transform(val => val?.split(','))
 })
+
+// search should look only for the movies ids themeselve and then supply a list to another query for full lookup of the movie
 
 export const searchMovies = async (req: Request, res: Response) => {
   try {
@@ -47,13 +53,17 @@ export const searchMovies = async (req: Request, res: Response) => {
       clauses.push(full_cases) 
     }
 
-    const queryTemplate = 'SELECT * FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id WHERE'  
+    const queryTemplate = 'SELECT DISTINCT m.id FROM movies m JOIN movie_genres mg ON mg.movie_id = m.id WHERE'  
 
     const full_query = `${queryTemplate} ${clauses.join(' ')}`
 
-    const [rows] = await db.query(full_query, query_args)
+    const [rows] = await db.query<MovieSearchId[]>(full_query, query_args)
 
-    res.status(200).json({ message: 'got a search request.', rows, full_query })
+    const matchingIds = rows.map(row => row.id)
+
+    const full_results = await getMoviesByIds(matchingIds)
+
+    res.status(200).json({ message: 'matching movie ids.', full_results })
   } catch (e) {
     const error = e as Error;
       console.error(error.message)
@@ -76,6 +86,55 @@ export const getAllMovies = async (req: Request, res: Response) => {
       .status(500)
       .json({ message: 'Failed to fetch movies' })
   }
+}
+
+export const getMoviesByIds = async (movieIds: string[]): Promise<any[]> => {
+  if (movieIds.length === 0) {
+    return [];
+  }
+
+  const placeholders = movieIds.map(() => '?').join(',');
+  
+  const [rows] = await db.query<MovieWithGenre[]>(`
+    SELECT
+      m.id,
+      m.title,
+      m.year,
+      m.rated,
+      mg.genre_id,
+      g.genre_name,
+      g.genre_level
+    FROM
+      movies m
+    INNER JOIN movie_genres mg ON m.id = mg.movie_id
+    INNER JOIN genres g ON g.id = mg.genre_id
+    WHERE m.id IN (${placeholders})
+    ORDER BY m.id, g.genre_level`,
+    movieIds
+  );
+
+  // Group results by movie ID
+  const moviesMap = new Map<string, any>();
+
+  rows.forEach(row => {
+    if (!moviesMap.has(row.id)) {
+      moviesMap.set(row.id, {
+        id: row.id,
+        title: row.title,
+        year: row.year,
+        rated: row.rated,
+        genres: []
+      });
+    }
+
+    moviesMap.get(row.id)!.genres.push({
+      genre_id: row.genre_id,
+      genre_name: row.genre_name,
+      genre_level: row.genre_level
+    });
+  });
+
+  return Array.from(moviesMap.values());
 }
 
 export const getMovieById = async (req: Request, res: Response) => {
